@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🗡️ Дробный Рыцарь — Платформер</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Главное меню -->
+    <div id="menu-screen" class="screen active">
+        <div class="menu-container">
+            <div class="title-section">
+                <div class="castle-bg-decor"></div>
+                <h1 class="game-title">
+                    <span class="icon">⚔️</span>
+                    <span class="text">ДРОБНЫЙ<br>РЫЦАРЬ</span>
+                    <span class="icon">🛡️</span>
+                </h1>
+                <p class="tagline">Спаси принцессу из Башни Чисел!</p>
+            </div>
+            
+            <div class="menu-buttons">
+                <button class="btn btn-primary" onclick="UI.showScreen('select-screen')">
+                    🎮 ИГРАТЬ
+                </button>
+                <button class="btn" onclick="UI.showScreen('tutorial-screen')">
+                    📖 ОБУЧЕНИЕ
+                </button>
+                <button class="btn" onclick="UI.showScreen('records-screen')">
+                    🏆 РЕКОРДЫ
+                </button>
+            </div>
+            
+            <div class="hero-animation">
+                <div class="knight-sprite"></div>
+                <div class="dragon-sprite"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Выбор игрока -->
+    <div id="select-screen" class="screen">
+        <div class="screen-content">
+            <div class="header">
+                <button class="btn-back" onclick="UI.showScreen('menu-screen')">← Назад</button>
+                <h2>👥 Выбор героя</h2>
+            </div>
+            
+            <div class="player-section">
+                <div class="create-player">
+                    <h3>✨ Новый герой</h3>
+                    <input type="text" id="player-name-input" placeholder="Введи имя..." maxlength="10">
+                    <button class="btn btn-success" onclick="Players.create()">Создать</button>
+                </div>
+                
+                <div class="players-list-container">
+                    <h3>🎮 Герои</h3>
+                    <div id="players-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Обучение -->
+    <div id="tutorial-screen" class="screen">
+        <div class="screen-content">
+            <div class="header">
+                <button class="btn-back" onclick="UI.showScreen('menu-screen')">← Назад</button>
+                <h2>📖 Как играть</h2>
+            </div>
+            
+            <div class="tutorial-cards">
+                <div class="tutorial-card">
+                    <h3>🎮 Управление</h3>
+                    <div class="controls-grid">
+                        <div class="control-item">
+                            <span class="key">A</span> / <span class="key">←</span>
+                            <span>Влево</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">D</span> / <span class="key">→</span>
+                            <span>Вправо</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">W</span> / <span class="key">↑</span>
+                            <span>Прыжок</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tutorial-card">
+                    <h3>⚔️ Бой</h3>
+                    <p>Подойди к врагу 👾</p>
+                    <p>Реши пример на дроби 📝</p>
+                    <p>Правильно = враг побеждён! ✅</p>
+                </div>
+                
+                <div class="tutorial-card">
+                    <h3>🗝️ Прохождение</h3>
+                    <p>Собирай ключи 🔑</p>
+                    <p>Открывай двери 🚪</p>
+                    <p>Победи всех врагов 👾</p>
+                    <p>Дойди до выхода! 🚩</p>
+                </div>
+                
+                <div class="tutorial-card">
+                    <h3>💰 Очки</h3>
+                    <p>Правильный ответ: +50</p>
+                    <p>Быстрый (<3 сек): +25</p>
+                    <p>Комбо x3: +30</p>
+                    <p>Монетка: +10</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Рекорды -->
+    <div id="records-screen" class="screen">
+        <div class="screen-content">
+            <div class="header">
+                <button class="btn-back" onclick="UI.showScreen('menu-screen')">← Назад</button>
+                <h2>🏆 Таблица рекордов</h2>
+            </div>
+            
+            <div class="records-table">
+                <div class="records-header">
+                    <span>#</span>
+                    <span>Имя</span>
+                    <span>Уровень</span>
+                    <span>Очки</span>
+                </div>
+                <div id="records-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Карта уровней -->
+    <div id="map-screen" class="screen">
+        <div class="screen-content">
+            <div class="header">
+                <button class="btn-back" onclick="UI.showScreen('select-screen')">← Назад</button>
+                <h2>🏰 Башня Чисел</h2>
+                <div class="player-info">
+                    <span id="map-player-name"></span>
+                    <span id="map-player-score">💰 0</span>
+                </div>
+            </div>
+            
+            <div class="tower-map">
+                <div class="floor floor-4">
+                    <span class="floor-label">Этаж 4: Дракон 🐉</span>
+                    <div class="levels-row" id="floor-4-levels"></div>
+                </div>
+                <div class="floor floor-3">
+                    <span class="floor-label">Этаж 3: Маг 🧙</span>
+                    <div class="levels-row" id="floor-3-levels"></div>
+                </div>
+                <div class="floor floor-2">
+                    <span class="floor-label">Этаж 2: Призрак 👻</span>
+                    <div class="levels-row" id="floor-2-levels"></div>
+                </div>
+                <div class="floor floor-1">
+                    <span class="floor-label">Этаж 1: Мыши 🦇</span>
+                    <div class="levels-row" id="floor-1-levels"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Игровой экран -->
+    <div id="game-screen" class="screen">
+        <!-- HUD -->
+        <div id="hud">
+            <div class="hud-left">
+                <div class="hearts" id="hud-hearts"></div>
+                <div class="stat keys">🗝️ <span id="hud-keys">0/0</span></div>
+            </div>
+            <div class="hud-center">
+                <div class="level-name" id="hud-level">Уровень 1</div>
+                <div class="enemies-left">👾 <span id="hud-enemies">0/0</span></div>
+            </div>
+            <div class="hud-right">
+                <div class="stat score">💰 <span id="hud-score">0</span></div>
+                <div class="stat combo">🔥 <span id="hud-combo">0</span></div>
+            </div>
+        </div>
+
+        <!-- Игровое поле -->
+        <canvas id="game-canvas"></canvas>
+
+        <!-- Кнопка паузы -->
+        <button id="pause-btn" onclick="Game.pause()">⏸️</button>
+
+        <!-- Модальное окно боя -->
+        <div id="battle-modal" class="modal hidden">
+            <div class="modal-box battle-box">
+                <div class="enemy-info">
+                    <span class="enemy-sprite" id="battle-sprite">🦇</span>
+                    <span class="enemy-name" id="battle-name">Летучая мышь</span>
+                </div>
+                <div class="question-section">
+                    <div class="question" id="battle-question">1/2 + 1/4 = ?</div>
+                    <div class="timer-bar"><div class="timer-fill" id="battle-timer"></div></div>
+                </div>
+                <div class="answers-grid" id="battle-answers"></div>
+            </div>
+        </div>
+
+        <!-- Модальное окно паузы -->
+        <div id="pause-modal" class="modal hidden">
+            <div class="modal-box">
+                <h2>⏸️ Пауза</h2>
+                <div class="modal-buttons">
+                    <button class="btn btn-primary" onclick="Game.resume()">▶️ Продолжить</button>
+                    <button class="btn" onclick="Game.restart()">🔄 Заново</button>
+                    <button class="btn btn-danger" onclick="Game.exitToMap()">🚪 Выйти</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Победа на уровне -->
+    <div id="win-screen" class="screen">
+        <div class="result-box victory">
+            <h1>🎉 Уровень пройден!</h1>
+            <div class="result-stats">
+                <div class="stat-item">
+                    <span class="label">Уровень</span>
+                    <span class="value" id="win-level">1</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Очки</span>
+                    <span class="value" id="win-score">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Комбо</span>
+                    <span class="value" id="win-combo">0</span>
+                </div>
+            </div>
+            <div class="result-buttons">
+                <button class="btn btn-primary" onclick="Game.nextLevel()">➡️ Дальше</button>
+                <button class="btn" onclick="UI.showScreen('map-screen'); Map.render();">🗺️ Карта</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Поражение -->
+    <div id="lose-screen" class="screen">
+        <div class="result-box defeat">
+            <h1>💀 Поражение</h1>
+            <p>Не сдавайся! Попробуй снова!</p>
+            <div class="result-stats">
+                <div class="stat-item">
+                    <span class="label">Очки</span>
+                    <span class="value" id="lose-score">0</span>
+                </div>
+            </div>
+            <div class="result-buttons">
+                <button class="btn btn-primary" onclick="Game.restart()">🔄 Заново</button>
+                <button class="btn" onclick="UI.showScreen('map-screen'); Map.render();">🗺️ Карта</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Финальная победа -->
+    <div id="final-screen" class="screen">
+        <div class="result-box final-victory">
+            <div class="confetti"></div>
+            <h1>👑 ПОБЕДА! 👑</h1>
+            <div class="princess-saved">
+                <span class="princess">👸</span>
+                <p>Принцесса Дробинка спасена!</p>
+            </div>
+            <div class="result-stats">
+                <div class="stat-item big">
+                    <span class="label">Итоговый счёт</span>
+                    <span class="value" id="final-score">0</span>
+                </div>
+            </div>
+            <div class="result-buttons">
+                <button class="btn btn-primary" onclick="UI.showScreen('menu-screen')">🏠 Меню</button>
+                <button class="btn" onclick="UI.showScreen('records-screen'); Records.render();">🏆 Рекорды</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Мобильное управление -->
+    <div id="mobile-controls">
+        <button class="mobile-btn left" id="mobile-left">◀</button>
+        <button class="mobile-btn right" id="mobile-right">▶</button>
+        <button class="mobile-btn jump" id="mobile-jump">▲</button>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+</html>
