@@ -727,19 +727,111 @@ function resizeCanvas() {
 }
 
 function setupMobile() {
-    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry/i.test(navigator.userAgent);
-    if (!isMobile) return;
+    // Определяем тачскрин по возможностям устройства, а не по User Agent
+    const isTouchDevice = ('ontouchstart' in window) || 
+                          (navigator.maxTouchPoints > 0) || 
+                          (navigator.msMaxTouchPoints > 0);
+    
+    if (isTouchDevice) {
+        document.body.classList.add('touch-device');
+    }
     
     const left = document.getElementById('mobile-left');
     const right = document.getElementById('mobile-right');
     const jump = document.getElementById('mobile-jump');
+    const pause = document.getElementById('mobile-pause');
     
-    left.addEventListener('touchstart', e => { e.preventDefault(); keysPressed['ArrowLeft'] = true; });
-    left.addEventListener('touchend', e => { e.preventDefault(); keysPressed['ArrowLeft'] = false; });
-    right.addEventListener('touchstart', e => { e.preventDefault(); keysPressed['ArrowRight'] = true; });
-    right.addEventListener('touchend', e => { e.preventDefault(); keysPressed['ArrowRight'] = false; });
-    jump.addEventListener('touchstart', e => { e.preventDefault(); keysPressed['ArrowUp'] = true; });
-    jump.addEventListener('touchend', e => { e.preventDefault(); keysPressed['ArrowUp'] = false; });
+    // Вибрация (если поддерживается)
+    function vibrate(duration = 20) {
+        if (navigator.vibrate) {
+            navigator.vibrate(duration);
+        }
+    }
+    
+    // Добавляем визуальный класс при нажатии
+    function addPressedClass(btn) {
+        btn.classList.add('pressed');
+    }
+    
+    function removePressedClass(btn) {
+        btn.classList.remove('pressed');
+    }
+    
+    // Универсальная функция для привязки событий
+    function bindTouchEvents(btn, keyCode, action = null) {
+        if (!btn) return;
+        
+        const startHandler = (e) => {
+            e.preventDefault();
+            if (action) {
+                action();
+            } else {
+                keysPressed[keyCode] = true;
+            }
+            addPressedClass(btn);
+            vibrate();
+        };
+        
+        const endHandler = (e) => {
+            e.preventDefault();
+            if (!action) {
+                keysPressed[keyCode] = false;
+            }
+            removePressedClass(btn);
+        };
+        
+        btn.addEventListener('touchstart', startHandler, { passive: false });
+        btn.addEventListener('touchend', endHandler, { passive: false });
+        btn.addEventListener('touchcancel', endHandler, { passive: false });
+        
+        // Предотвращаем контекстное меню при долгом нажатии
+        btn.addEventListener('contextmenu', e => e.preventDefault());
+    }
+    
+    // Привязываем события к кнопкам
+    bindTouchEvents(left, 'ArrowLeft');
+    bindTouchEvents(right, 'ArrowRight');
+    bindTouchEvents(jump, 'ArrowUp');
+    
+    // Кнопка паузы — специальная обработка
+    if (pause) {
+        pause.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            pause.classList.add('pressed');
+            vibrate(30);
+            
+            if (State.running && !State.battleActive) {
+                State.paused ? Game.resume() : Game.pause();
+            }
+        }, { passive: false });
+        
+        pause.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            pause.classList.remove('pressed');
+        }, { passive: false });
+        
+        pause.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            pause.classList.remove('pressed');
+        }, { passive: false });
+        
+        pause.addEventListener('contextmenu', e => e.preventDefault());
+    }
+    
+    // Предотвращаем двойной тап зум на всём документе
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+    
+    // Предотвращаем зум при pinch на игровом экране
+    document.addEventListener('gesturestart', e => e.preventDefault());
+    document.addEventListener('gesturechange', e => e.preventDefault());
+    document.addEventListener('gestureend', e => e.preventDefault());
 }
 
 // ===== UI УПРАВЛЕНИЕ =====
