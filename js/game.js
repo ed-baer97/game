@@ -739,7 +739,6 @@ function setupMobile() {
     const left = document.getElementById('mobile-left');
     const right = document.getElementById('mobile-right');
     const jump = document.getElementById('mobile-jump');
-    const pause = document.getElementById('mobile-pause');
     
     // Вибрация (если поддерживается)
     function vibrate(duration = 20) {
@@ -792,31 +791,6 @@ function setupMobile() {
     bindTouchEvents(left, 'ArrowLeft');
     bindTouchEvents(right, 'ArrowRight');
     bindTouchEvents(jump, 'ArrowUp');
-    
-    // Кнопка паузы — специальная обработка
-    if (pause) {
-        pause.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            pause.classList.add('pressed');
-            vibrate(30);
-            
-            if (State.running && !State.battleActive) {
-                State.paused ? Game.resume() : Game.pause();
-            }
-        }, { passive: false });
-        
-        pause.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            pause.classList.remove('pressed');
-        }, { passive: false });
-        
-        pause.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            pause.classList.remove('pressed');
-        }, { passive: false });
-        
-        pause.addEventListener('contextmenu', e => e.preventDefault());
-    }
     
     // Предотвращаем двойной тап зум на всём документе
     let lastTouchEnd = 0;

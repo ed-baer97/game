@@ -951,27 +951,11 @@ body {
     border-color: rgba(255, 215, 0, 0.8);
 }
 
-.mobile-btn.pause {
-    bottom: calc(40px + env(safe-area-inset-bottom, 0px));
-    right: calc(130px + env(safe-area-inset-right, 0px));
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
-    background: rgba(255, 71, 87, 0.3);
-    border-color: rgba(255, 71, 87, 0.6);
-}
-
-.mobile-btn.pause:active,
-.mobile-btn.pause.pressed {
-    background: rgba(255, 71, 87, 0.7);
-}
-
 /* Ландшафтная ориентация - кнопки повыше */
 @media (orientation: landscape) and (max-height: 500px) {
     .mobile-btn.left,
     .mobile-btn.right { bottom: 15px; }
     .mobile-btn.jump { bottom: 10px; width: 80px; height: 80px; }
-    .mobile-btn.pause { bottom: 15px; right: 120px; }
 }
 
 /* ===== RESPONSIVE ===== */
@@ -988,7 +972,6 @@ body {
     .stat { padding: 4px 8px; font-size: 10px; }
     .level-name { font-size: 10px; }
     .enemies-left { font-size: 9px; }
-    #pause-btn { display: none; } /* Скрываем десктопную кнопку паузы */
 }
 
 @media (min-width: 769px) and (hover: hover) {
