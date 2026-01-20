@@ -8,6 +8,8 @@ const PLAYER_SPEED = 4;
 const JUMP_FORCE = -12;
 const TILE = 40;
 const BATTLE_TIME = 12;
+const LEVEL_WIDTH = 800;
+const LEVEL_HEIGHT = 480;
 
 // ===== СОСТОЯНИЕ ИГРЫ =====
 const State = {
@@ -28,10 +30,39 @@ const State = {
     battleStartTime: 0
 };
 
-// ===== CANVAS =====
+// ===== CANVAS & CAMERA =====
 let canvas, ctx;
 let canvasWidth, canvasHeight;
 let keysPressed = {};
+
+const Camera = {
+    x: 0,
+    y: 0,
+    update() {
+        if (!State.player) return;
+
+        // Центрируем камеру на игроке
+        let targetX = State.player.x + State.player.w / 2 - canvasWidth / 2;
+        let targetY = State.player.y + State.player.h / 2 - canvasHeight / 2;
+
+        // Ограничиваем границами уровня
+        // Если уровень меньше экрана, центрируем
+        if (LEVEL_WIDTH < canvasWidth) {
+            targetX = -(canvasWidth - LEVEL_WIDTH) / 2;
+        } else {
+            targetX = Math.max(0, Math.min(targetX, LEVEL_WIDTH - canvasWidth));
+        }
+
+        if (LEVEL_HEIGHT < canvasHeight) {
+            targetY = -(canvasHeight - LEVEL_HEIGHT) / 2;
+        } else {
+            targetY = Math.max(0, Math.min(targetY, LEVEL_HEIGHT - canvasHeight));
+        }
+
+        this.x = targetX;
+        this.y = targetY;
+    }
+};
 
 // ===== ДАННЫЕ 20 УРОВНЕЙ =====
 const LEVELS = {
@@ -492,12 +523,12 @@ class Player {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Границы экрана
+        // Границы уровня
         if (this.x < 0) this.x = 0;
-        if (this.x + this.w > canvasWidth) this.x = canvasWidth - this.w;
+        if (this.x + this.w > LEVEL_WIDTH) this.x = LEVEL_WIDTH - this.w;
 
         // Падение
-        if (this.y > canvasHeight + 50) {
+        if (this.y > LEVEL_HEIGHT + 50) {
             loseLife();
             return;
         }
@@ -538,14 +569,14 @@ class Player {
 
     collides(rect) {
         return this.x < rect.x + rect.w &&
-               this.x + this.w > rect.x &&
-               this.y < rect.y + rect.h &&
-               this.y + this.h > rect.y;
+            this.x + this.w > rect.x &&
+            this.y < rect.y + rect.h &&
+            this.y + this.h > rect.y;
     }
 
     draw() {
         ctx.save();
-        
+
         // Тень
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
         ctx.beginPath();
@@ -563,35 +594,35 @@ class Player {
 
         // Тело рыцаря (пиксельный стиль)
         const bounce = this.onGround && Math.abs(this.vx) > 0.5 ? Math.sin(this.animFrame * Math.PI / 2) * 2 : 0;
-        
+
         // Броня (тело)
         ctx.fillStyle = '#708090';
         ctx.fillRect(this.x + 8, this.y + 18 - bounce, 20, 22);
-        
+
         // Шлем
         ctx.fillStyle = '#5f6f7f';
         ctx.fillRect(this.x + 6, this.y + 4 - bounce, 24, 18);
-        
+
         // Визор
         ctx.fillStyle = '#2a3a4a';
         ctx.fillRect(this.x + 10, this.y + 10 - bounce, 12, 6);
-        
+
         // Забрало
         ctx.fillStyle = '#ffd700';
         ctx.fillRect(this.x + 8, this.y + 8 - bounce, 4, 10);
-        
+
         // Ноги
         const legOffset = this.onGround && Math.abs(this.vx) > 0.5 ? this.animFrame % 2 * 3 : 0;
         ctx.fillStyle = '#505a60';
         ctx.fillRect(this.x + 10, this.y + 38 - bounce, 6, 10);
         ctx.fillRect(this.x + 20, this.y + 38 - bounce + legOffset, 6, 10 - legOffset);
-        
+
         // Меч
         ctx.fillStyle = '#c0c0c0';
         ctx.fillRect(this.x + 28, this.y + 20 - bounce, 6, 20);
         ctx.fillStyle = '#ffd700';
         ctx.fillRect(this.x + 26, this.y + 38 - bounce, 10, 4);
-        
+
         // Щит
         ctx.fillStyle = '#8b4513';
         ctx.fillRect(this.x - 2, this.y + 20 - bounce, 8, 16);
@@ -625,7 +656,7 @@ class Enemy {
 
     update() {
         if (this.defeated) return;
-        
+
         // Движение
         this.x += this.speed * this.dir;
         const range = this.isBoss ? 60 : 40;
@@ -636,28 +667,28 @@ class Enemy {
 
     draw() {
         if (this.defeated) return;
-        
+
         // Плавная анимация (замедленная)
         const time = Date.now() / 1000;
         const floatY = Math.sin(time * 1.5 + this.animOffset) * 4;
-        
+
         // Тень
         ctx.fillStyle = 'rgba(0,0,0,0.25)';
         ctx.beginPath();
         ctx.ellipse(this.x + this.w / 2, this.y + this.h + 5, this.w / 2 - 8, 8, 0, 0, Math.PI * 2);
         ctx.fill();
-        
+
         // Враг
         ctx.font = `${this.isBoss ? 60 : 40}px Arial`;
         ctx.textAlign = 'center';
         ctx.fillText(this.emoji, this.x + this.w / 2, this.y + this.h / 2 + 12 + floatY);
-        
+
         // Индикатор босса
         if (this.isBoss) {
             ctx.font = '10px "Press Start 2P"';
             ctx.fillStyle = '#ff4757';
             ctx.fillText('БОСС', this.x + this.w / 2, this.y - 10);
-            
+
             // HP бар босса
             const barW = 60;
             const barH = 6;
@@ -667,16 +698,16 @@ class Enemy {
             ctx.fillStyle = '#ff4757';
             ctx.fillRect(barX, this.y - 5, barW * (this.hp / this.maxHp), barH);
         }
-        
+
         ctx.textAlign = 'left';
     }
 
     collidesPlayer(player) {
         return !this.defeated &&
-               player.x < this.x + this.w - 10 &&
-               player.x + player.w > this.x + 10 &&
-               player.y < this.y + this.h - 10 &&
-               player.y + player.h > this.y + 10;
+            player.x < this.x + this.w - 10 &&
+            player.x + player.w > this.x + 10 &&
+            player.y < this.y + this.h - 10 &&
+            player.y + player.h > this.y + 10;
     }
 }
 
@@ -696,17 +727,17 @@ let currentLevel = {
 function init() {
     canvas = document.getElementById('game-canvas');
     ctx = canvas.getContext('2d');
-    
+
     // Исправление высоты для iOS Safari
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
     window.addEventListener('orientationchange', () => {
         setTimeout(setAppHeight, 100);
     });
-    
+
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
-    
+
     // Клавиатура
     window.addEventListener('keydown', e => {
         keysPressed[e.code] = true;
@@ -715,14 +746,14 @@ function init() {
         }
     });
     window.addEventListener('keyup', e => keysPressed[e.code] = false);
-    
+
     // Мобильное управление
     setupMobile();
-    
+
     // UI
     Players.render();
     Records.render();
-    
+
     console.log('🗡️ Дробный Рыцарь — Платформер загружен!');
 }
 
@@ -736,7 +767,7 @@ function resizeCanvas() {
     // Используем visualViewport для лучшей поддержки iOS Safari
     const width = window.visualViewport ? window.visualViewport.width : window.innerWidth;
     const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    
+
     canvas.width = width;
     canvas.height = height;
     canvasWidth = canvas.width;
@@ -750,38 +781,38 @@ if (window.visualViewport) {
 
 function setupMobile() {
     // Определяем тачскрин по возможностям устройства, а не по User Agent
-    const isTouchDevice = ('ontouchstart' in window) || 
-                          (navigator.maxTouchPoints > 0) || 
-                          (navigator.msMaxTouchPoints > 0);
-    
+    const isTouchDevice = ('ontouchstart' in window) ||
+        (navigator.maxTouchPoints > 0) ||
+        (navigator.msMaxTouchPoints > 0);
+
     if (isTouchDevice) {
         document.body.classList.add('touch-device');
     }
-    
+
     const left = document.getElementById('mobile-left');
     const right = document.getElementById('mobile-right');
     const jump = document.getElementById('mobile-jump');
-    
+
     // Вибрация (если поддерживается)
     function vibrate(duration = 20) {
         if (navigator.vibrate) {
             navigator.vibrate(duration);
         }
     }
-    
+
     // Добавляем визуальный класс при нажатии
     function addPressedClass(btn) {
         btn.classList.add('pressed');
     }
-    
+
     function removePressedClass(btn) {
         btn.classList.remove('pressed');
     }
-    
+
     // Универсальная функция для привязки событий
     function bindTouchEvents(btn, keyCode, action = null) {
         if (!btn) return;
-        
+
         const startHandler = (e) => {
             e.preventDefault();
             if (action) {
@@ -792,7 +823,7 @@ function setupMobile() {
             addPressedClass(btn);
             vibrate();
         };
-        
+
         const endHandler = (e) => {
             e.preventDefault();
             if (!action) {
@@ -800,20 +831,20 @@ function setupMobile() {
             }
             removePressedClass(btn);
         };
-        
+
         btn.addEventListener('touchstart', startHandler, { passive: false });
         btn.addEventListener('touchend', endHandler, { passive: false });
         btn.addEventListener('touchcancel', endHandler, { passive: false });
-        
+
         // Предотвращаем контекстное меню при долгом нажатии
         btn.addEventListener('contextmenu', e => e.preventDefault());
     }
-    
+
     // Привязываем события к кнопкам
     bindTouchEvents(left, 'ArrowLeft');
     bindTouchEvents(right, 'ArrowRight');
     bindTouchEvents(jump, 'ArrowUp');
-    
+
     // Предотвращаем двойной тап зум на всём документе
     let lastTouchEnd = 0;
     document.addEventListener('touchend', (e) => {
@@ -823,7 +854,7 @@ function setupMobile() {
         }
         lastTouchEnd = now;
     }, { passive: false });
-    
+
     // Предотвращаем зум при pinch на игровом экране
     document.addEventListener('gesturestart', e => e.preventDefault());
     document.addEventListener('gesturechange', e => e.preventDefault());
@@ -851,11 +882,11 @@ const Players = {
         const input = document.getElementById('player-name-input');
         const name = input.value.trim();
         if (!name) return input.style.borderColor = '#ff4757';
-        
+
         if (this.list.some(p => p.name.toLowerCase() === name.toLowerCase())) {
             return alert('Имя уже занято!');
         }
-        
+
         this.list.push({ id: Date.now(), name, maxLevel: 1, score: 0 });
         this.save();
         input.value = '';
@@ -907,19 +938,19 @@ const Players = {
 const Map = {
     render() {
         const maxLevel = Players.current ? Players.current.maxLevel : 1;
-        
+
         // Этаж 1: уровни 1-5
         const floor1 = document.getElementById('floor-1-levels');
         floor1.innerHTML = this.renderFloor(1, 5, maxLevel);
-        
+
         // Этаж 2: уровни 6-10
         const floor2 = document.getElementById('floor-2-levels');
         floor2.innerHTML = this.renderFloor(6, 10, maxLevel);
-        
+
         // Этаж 3: уровни 11-15
         const floor3 = document.getElementById('floor-3-levels');
         floor3.innerHTML = this.renderFloor(11, 15, maxLevel);
-        
+
         // Этаж 4: уровни 16-20
         const floor4 = document.getElementById('floor-4-levels');
         floor4.innerHTML = this.renderFloor(16, 20, maxLevel);
@@ -932,16 +963,16 @@ const Map = {
             const unlocked = i <= maxLevel;
             const completed = i < maxLevel;
             const current = i === maxLevel;
-            
+
             const classes = ['level-node'];
             if (isBoss) classes.push('boss');
             if (unlocked) classes.push('unlocked');
             if (completed) classes.push('completed');
             if (current) classes.push('current');
-            
+
             const content = isBoss ? this.getBossEmoji(i) : i;
             const onclick = unlocked ? `onclick="Game.start(${i})"` : '';
-            
+
             html += `<div class="${classes.join(' ')}" ${onclick}>${content}</div>`;
         }
         return html;
@@ -961,15 +992,15 @@ const Records = {
     render() {
         const container = document.getElementById('records-list');
         const sorted = [...Players.list].sort((a, b) => b.score - a.score);
-        
+
         if (sorted.length === 0) {
             container.innerHTML = '<p class="no-records">Нет рекордов</p>';
             return;
         }
-        
+
         const medals = ['🥇', '🥈', '🥉'];
         const classes = ['gold', 'silver', 'bronze'];
-        
+
         container.innerHTML = sorted.slice(0, 10).map((p, i) => `
             <div class="record-row ${classes[i] || ''}">
                 <span>${medals[i] || (i + 1)}</span>
@@ -993,11 +1024,11 @@ const Game = {
         State.running = true;
         State.paused = false;
         State.battleActive = false;
-        
+
         loadLevel(level);
         updateHUD();
         UI.showScreen('game-screen');
-        
+
         requestAnimationFrame(gameLoop);
     },
 
@@ -1033,7 +1064,7 @@ const Game = {
 // ===== ЗАГРУЗКА УРОВНЯ =====
 function loadLevel(num) {
     const data = LEVELS[num];
-    
+
     currentLevel.bg = data.bg;
     currentLevel.ground = data.ground;
     currentLevel.platforms = [...data.platforms];
@@ -1041,17 +1072,17 @@ function loadLevel(num) {
     currentLevel.keys = data.keys.map(k => ({ ...k, collected: false }));
     currentLevel.doors = data.doors.map(d => ({ ...d, open: false }));
     currentLevel.exit = { ...data.exit, active: false };
-    
+
     // Враги
     currentLevel.enemies = data.enemies.map(e => new Enemy(e, e.type));
     if (data.boss) {
         currentLevel.enemies.push(new Enemy(data.boss, data.boss.type));
     }
-    
+
     State.enemies = currentLevel.enemies;
     State.enemiesTotal = currentLevel.enemies.length;
     State.keysNeeded = data.doors.length > 0 ? Math.max(...data.doors.map(d => d.needKeys)) : 0;
-    
+
     // Игрок
     State.player = new Player(data.playerStart.x, data.playerStart.y);
 }
@@ -1059,19 +1090,22 @@ function loadLevel(num) {
 // ===== ИГРОВОЙ ЦИКЛ =====
 function gameLoop() {
     if (!State.running) return;
-    
+
     if (!State.paused && !State.battleActive) {
         update();
     }
-    
+
     render();
     requestAnimationFrame(gameLoop);
 }
 
+
 function update() {
+    Camera.update();
+
     const p = State.player;
     p.update(currentLevel.platforms);
-    
+
     // Враги
     for (const e of State.enemies) {
         e.update();
@@ -1080,7 +1114,7 @@ function update() {
             return;
         }
     }
-    
+
     // Монеты
     for (const c of currentLevel.coins) {
         if (!c.collected && rectCollide(p, { x: c.x, y: c.y, w: 25, h: 25 })) {
@@ -1089,7 +1123,7 @@ function update() {
             updateHUD();
         }
     }
-    
+
     // Ключи
     for (const k of currentLevel.keys) {
         if (!k.collected && rectCollide(p, { x: k.x, y: k.y, w: 25, h: 25 })) {
@@ -1098,37 +1132,41 @@ function update() {
             updateHUD();
         }
     }
-    
+
     // Двери
     for (const d of currentLevel.doors) {
         if (!d.open && State.keys >= d.needKeys && rectCollide(p, { x: d.x, y: d.y, w: 40, h: 55 })) {
             d.open = true;
         }
     }
-    
+
     // Выход
     const allDefeated = State.enemies.every(e => e.defeated);
     const allDoorsOpen = currentLevel.doors.every(d => d.open);
     currentLevel.exit.active = allDefeated && allDoorsOpen;
-    
+
     if (currentLevel.exit.active && rectCollide(p, { x: currentLevel.exit.x, y: currentLevel.exit.y, w: 50, h: 60 })) {
         levelComplete();
     }
 }
 
 function render() {
-    // Фон
+    // Фон заливаем на весь канвас (экран)
     ctx.fillStyle = currentLevel.bg;
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    
-    // Декор
+
+    // Декор на фоне (параллакс или статика? пока статика относительно экрана)
     ctx.font = '30px Arial';
     ctx.globalAlpha = 0.15;
     for (let i = 0; i < 6; i++) {
         ctx.fillText(['☁️', '⭐', '✨'][i % 3], 100 + i * 130, 60 + Math.sin(i) * 20);
     }
     ctx.globalAlpha = 1;
-    
+
+    // --- НАЧАЛО КАМЕРЫ ---
+    ctx.save();
+    ctx.translate(-Camera.x, -Camera.y);
+
     // Платформы
     for (const p of currentLevel.platforms) {
         ctx.fillStyle = currentLevel.ground;
@@ -1137,7 +1175,7 @@ function render() {
         ctx.fillStyle = p.h > 20 ? '#5a8a3a' : '#7a6a5a';
         ctx.fillRect(p.x, p.y, p.w, 4);
     }
-    
+
     // Ключи
     ctx.font = '24px Arial';
     for (const k of currentLevel.keys) {
@@ -1146,7 +1184,7 @@ function render() {
             ctx.fillText('🗝️', k.x, k.y + bounce);
         }
     }
-    
+
     // Монеты
     for (const c of currentLevel.coins) {
         if (!c.collected) {
@@ -1154,7 +1192,7 @@ function render() {
             ctx.fillText('💎', c.x, c.y + bounce);
         }
     }
-    
+
     // Двери
     ctx.font = '40px Arial';
     for (const d of currentLevel.doors) {
@@ -1170,7 +1208,7 @@ function render() {
             ctx.font = '40px Arial';
         }
     }
-    
+
     // Выход
     if (currentLevel.exit.active) {
         ctx.shadowColor = '#ffd700';
@@ -1181,14 +1219,17 @@ function render() {
     ctx.fillText('🚩', currentLevel.exit.x, currentLevel.exit.y + 45);
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
-    
+
     // Враги
     for (const e of State.enemies) {
         e.draw();
     }
-    
+
     // Игрок
     State.player.draw();
+
+    // --- КОНЕЦ КАМЕРЫ ---
+    ctx.restore();
 }
 
 // ===== БОЙ =====
@@ -1196,18 +1237,18 @@ function startBattle(enemy) {
     State.battleActive = true;
     State.battleEnemy = enemy;
     State.battleStartTime = Date.now();
-    
+
     document.getElementById('battle-sprite').textContent = enemy.emoji;
     document.getElementById('battle-name').textContent = (enemy.isBoss ? '👑 ' : '') + enemy.name;
     document.getElementById('battle-modal').classList.remove('hidden');
-    
+
     generateQuestion(enemy.difficulty);
     updateBattleTimer();
 }
 
 function generateQuestion(difficulty) {
     let q, correct, wrongs;
-    
+
     switch (difficulty) {
         case 'easy': ({ q, correct, wrongs } = genEasy()); break;
         case 'medium': ({ q, correct, wrongs } = genMedium()); break;
@@ -1216,9 +1257,9 @@ function generateQuestion(difficulty) {
         case 'expert': ({ q, correct, wrongs } = genExpert()); break;
         default: ({ q, correct, wrongs } = genEasy());
     }
-    
+
     document.getElementById('battle-question').textContent = q;
-    
+
     const answers = shuffle([correct, ...wrongs]);
     document.getElementById('battle-answers').innerHTML = answers.map(a =>
         `<button class="answer-btn" onclick="checkAnswer(this, '${esc(a)}', '${esc(correct)}')">${a}</button>`
@@ -1227,11 +1268,11 @@ function generateQuestion(difficulty) {
 
 function updateBattleTimer() {
     if (!State.battleActive) return;
-    
+
     const elapsed = (Date.now() - State.battleStartTime) / 1000;
     const remaining = Math.max(0, BATTLE_TIME - elapsed);
     document.getElementById('battle-timer').style.width = (remaining / BATTLE_TIME * 100) + '%';
-    
+
     if (remaining <= 0) {
         battleLose();
     } else {
@@ -1241,9 +1282,9 @@ function updateBattleTimer() {
 
 function checkAnswer(btn, selected, correct) {
     if (!State.battleActive) return;
-    
+
     document.querySelectorAll('.answer-btn').forEach(b => b.onclick = null);
-    
+
     if (selected === correct) {
         btn.classList.add('correct');
         setTimeout(battleWin, 400);
@@ -1259,26 +1300,26 @@ function checkAnswer(btn, selected, correct) {
 function battleWin() {
     const enemy = State.battleEnemy;
     enemy.hp--;
-    
+
     State.combo++;
     State.maxCombo = Math.max(State.maxCombo, State.combo);
-    
+
     const elapsed = (Date.now() - State.battleStartTime) / 1000;
     let points = 50;
     if (elapsed < 3) points += 25;
     if (State.combo >= 3) points += 30;
     if (State.combo >= 5) points += 50;
     if (enemy.isBoss) points += 100;
-    
+
     State.score += points;
-    
+
     if (enemy.hp <= 0) {
         enemy.defeated = true;
         State.score += enemy.isBoss ? 200 : 50;
     }
-    
+
     endBattle();
-    
+
     if (enemy.hp > 0) {
         setTimeout(() => startBattle(enemy), 300);
     }
@@ -1287,10 +1328,10 @@ function battleWin() {
 function battleLose() {
     State.combo = 0;
     loseLife();
-    
+
     State.player.x -= State.player.facingRight ? 60 : -60;
     State.player.vy = -8;
-    
+
     endBattle();
 }
 
@@ -1304,7 +1345,7 @@ function endBattle() {
 function loseLife() {
     State.lives--;
     updateHUD();
-    
+
     if (State.lives <= 0) {
         gameOver();
     } else {
@@ -1318,7 +1359,7 @@ function loseLife() {
 
 function levelComplete() {
     State.running = false;
-    
+
     if (Players.current) {
         if (State.currentLevel >= Players.current.maxLevel && State.currentLevel < 20) {
             Players.current.maxLevel = State.currentLevel + 1;
@@ -1326,7 +1367,7 @@ function levelComplete() {
         Players.current.score = Math.max(Players.current.score, State.score);
         Players.save();
     }
-    
+
     if (State.currentLevel === 20) {
         document.getElementById('final-score').textContent = State.score;
         UI.showScreen('final-screen');
@@ -1355,14 +1396,14 @@ function updateHUD() {
         span.textContent = '❤️';
         hearts.appendChild(span);
     }
-    
+
     // Ключи
     document.getElementById('hud-keys').textContent = `${State.keys}/${State.keysNeeded || 0}`;
-    
+
     // Враги
     const defeated = State.enemies.filter(e => e.defeated).length;
     document.getElementById('hud-enemies').textContent = `${defeated}/${State.enemiesTotal}`;
-    
+
     // Очки и комбо
     document.getElementById('hud-score').textContent = State.score;
     document.getElementById('hud-combo').textContent = State.combo;
@@ -1390,7 +1431,7 @@ function genEasy() {
             const d = [3, 4, 5, 6][Math.floor(Math.random() * 4)];
             const n1 = Math.floor(Math.random() * (d - 2)) + 1;
             const n2 = n1 + 1 + Math.floor(Math.random() * (d - n1 - 1));
-            return { q: `Что больше: ${n1}/${d} или ${n2}/${d}?`, correct: `${n2}/${d}`, wrongs: [`${n1}/${d}`, `${n1+n2}/${d}`, `1/${d}`] };
+            return { q: `Что больше: ${n1}/${d} или ${n2}/${d}?`, correct: `${n2}/${d}`, wrongs: [`${n1}/${d}`, `${n1 + n2}/${d}`, `1/${d}`] };
         }
     ];
     return types[Math.floor(Math.random() * types.length)]();
