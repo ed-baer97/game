@@ -697,6 +697,13 @@ function init() {
     canvas = document.getElementById('game-canvas');
     ctx = canvas.getContext('2d');
     
+    // Исправление высоты для iOS Safari
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(setAppHeight, 100);
+    });
+    
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     
@@ -719,11 +726,26 @@ function init() {
     console.log('🗡️ Дробный Рыцарь — Платформер загружен!');
 }
 
+// Исправление 100vh на iOS Safari
+function setAppHeight() {
+    const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', `${vh}px`);
+}
+
 function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Используем visualViewport для лучшей поддержки iOS Safari
+    const width = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+    const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    
+    canvas.width = width;
+    canvas.height = height;
     canvasWidth = canvas.width;
     canvasHeight = canvas.height;
+}
+
+// Дополнительный обработчик для iOS Safari
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', resizeCanvas);
 }
 
 function setupMobile() {
